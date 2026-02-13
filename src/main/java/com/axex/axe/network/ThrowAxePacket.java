@@ -35,21 +35,11 @@ public record ThrowAxePacket(int chargeTicks) {
                 return;
             }
 
-            int clampedCharge = Mth.clamp(packet.chargeTicks, 0, 20);
+            int clampedCharge = Mth.clamp(packet.chargeTicks(), 0, 20);
             float chargeScale = clampedCharge / 20.0F;
+
             if (chargeScale < 0.1F) {
                 return;
             }
 
-            ThrownAxeEntity thrownAxe = new ThrownAxeEntity(player.level(), player, held, ThrownAxeEntity.computeDamage(player, held, chargeScale));
-            float velocity = 1.6F + (chargeScale * 1.4F);
-            thrownAxe.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, velocity, 1.0F);
-
-            player.level().addFreshEntity(thrownAxe);
-            player.level().playSound(null, player.blockPosition(), SoundEvents.TRIDENT_THROW, SoundSource.PLAYERS, 1.0F, 0.95F + player.getRandom().nextFloat() * 0.1F);
-            held.shrink(1);
-            player.getCooldowns().addCooldown(held.getItem(), 15);
-        });
-        context.setPacketHandled(true);
-    }
-}
+            ThrownAxeEntity thrownAxe = new Thrown
