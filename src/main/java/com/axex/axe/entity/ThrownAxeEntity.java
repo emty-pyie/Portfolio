@@ -98,6 +98,17 @@ public class ThrownAxeEntity extends Projectile {
         }
     }
 
+
+    @Override
+    protected boolean canHitEntity(Entity entity) {
+        if (isStuck()) {
+            return false;
+        }
+
+        Entity owner = getOwner();
+        return super.canHitEntity(entity) && entity != owner;
+    }
+
     @Override
     protected void onHitEntity(EntityHitResult result) {
         super.onHitEntity(result);
@@ -246,6 +257,14 @@ public class ThrownAxeEntity extends Projectile {
         float enchantBonus = sharpness > 0 ? 0.5F * sharpness + 0.5F : 0.0F;
 
         return (base + enchantBonus) * (0.7F + 0.8F * chargeScale);
+    }
+
+    public ItemStack getAxeStack() {
+        return entityData.get(AXE_STACK);
+    }
+
+    public void setAxeStack(ItemStack stack) {
+        entityData.set(AXE_STACK, stack);
     protected boolean canHitEntity(Entity entity) {
         return entity != this.getOwner();
     }
