@@ -13,7 +13,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.lwjgl.glfw.GLFW;
 
-@Mod.EventBusSubscriber(modid = AxeMod.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
+@Mod.EventBusSubscriber(modid = AxeMod.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public final class ClientEvents {
     private static final String CATEGORY = "key.categories.axe";
     public static final KeyMapping THROW_AXE_KEY = new KeyMapping("key.axe.throw", GLFW.GLFW_KEY_R, CATEGORY);
@@ -26,7 +26,7 @@ public final class ClientEvents {
         event.register(THROW_AXE_KEY);
     }
 
-    @Mod.EventBusSubscriber(modid = AxeMod.MOD_ID, value = Dist.CLIENT)
+    @Mod.EventBusSubscriber(modid = AxeMod.MODID, value = Dist.CLIENT)
     public static class Runtime {
         private static boolean charging;
         private static int chargeTicks;
