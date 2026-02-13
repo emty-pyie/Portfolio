@@ -172,9 +172,11 @@ public class ThrownAxeEntity extends ThrowableProjectile {
     }
 
     @Override
-    protected double getDefaultGravity() {
-        return isStuck() ? 0.0D : 0.05D;
-    }
+protected float getGravity() {
+    return isStuck() ? 0.0F : 0.05F;
+}
+
+    
 
     @Override
     protected ItemStack getDefaultItem() {
