@@ -10,17 +10,19 @@ import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.NetworkEvent;
 
+import java.util.function.Supplier;
+
 public record ThrowAxePacket(int chargeTicks) {
 
-    public static void encode(ThrowAxePacket msg, FriendlyByteBuf buf) {
-        buf.writeVarInt(msg.chargeTicks);
+    public static void encode(ThrowAxePacket packet, FriendlyByteBuf buffer) {
+        buffer.writeVarInt(packet.chargeTicks);
     }
 
-    public static ThrowAxePacket decode(FriendlyByteBuf buf) {
-        return new ThrowAxePacket(buf.readVarInt());
+    public static ThrowAxePacket decode(FriendlyByteBuf buffer) {
+        return new ThrowAxePacket(buffer.readVarInt());
     }
 
-    public static void handle(ThrowAxePacket msg, NetworkEvent.Context context) {
+    public static void handle(ThrowAxePacket packet, NetworkEvent.Context context) {
         context.enqueueWork(() -> {
             ServerPlayer player = context.getSender();
             if (player == null || player.isSpectator()) return;
@@ -28,11 +30,11 @@ public record ThrowAxePacket(int chargeTicks) {
             ItemStack held = player.getMainHandItem();
             if (!(held.getItem() instanceof AxeItem) || held.isEmpty()) return;
 
-            int clampedCharge = Mth.clamp(msg.chargeTicks, 0, 20);
+            int clampedCharge = Mth.clamp(packet.chargeTicks, 0, 20);
             float chargeScale = clampedCharge / 20.0F;
             if (chargeScale < 0.1F) return;
 
-            ThrownAxeEntity axe = new ThrownAxeEntity(
+            ThrownAxeEntity thrownAxe = new ThrownAxeEntity(
                     player.level(),
                     player,
                     held,
@@ -40,13 +42,22 @@ public record ThrowAxePacket(int chargeTicks) {
             );
 
             float velocity = 1.6F + (chargeScale * 1.4F);
-            axe.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, velocity, 1.0F);
+            thrownAxe.shootFromRotation(
+                    player,
+                    player.getXRot(),
+                    player.getYRot(),
+                    0.0F,
+                    velocity,
+                    1.0F
+            );
 
-            player.level().addFreshEntity(axe);
+            player.level().addFreshEntity(thrownAxe);
+
+            // 🔥 FIX: unwrap holder with .value()
             player.level().playSound(
                     null,
                     player.blockPosition(),
-                    SoundEvents.TRIDENT_THROW,
+                    SoundEvents.TRIDENT_THROW.value(),
                     SoundSource.PLAYERS,
                     1.0F,
                     0.95F + player.getRandom().nextFloat() * 0.1F
