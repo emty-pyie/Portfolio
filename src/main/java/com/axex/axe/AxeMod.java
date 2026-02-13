@@ -13,15 +13,12 @@ public class AxeMod {
 
     public static final String MODID = "axe_or_ex";
 
-    public AxeMod() {
+    public AxeMod(FMLJavaModLoadingContext context) {
+        IEventBus modBus = context.getModEventBus();
 
-        IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
-
-        // REGISTER DEFERRED REGISTERS PROPERLY
         ModItems.ITEMS.register(modBus);
         ModEntities.ENTITIES.register(modBus);
 
-        // REGISTER NETWORK
         ModNetwork.register();
 
         MinecraftForge.EVENT_BUS.register(this);
