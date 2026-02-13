@@ -3,6 +3,7 @@ package com.axex.axe.network;
 import com.axex.axe.AxeMod;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.network.ChannelBuilder;
+import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.SimpleChannel;
 
 public class ModNetwork {
@@ -19,7 +20,7 @@ public class ModNetwork {
     public static void register() {
         int id = 0;
 
-        CHANNEL.messageBuilder(ThrowAxePacket.class, id++)
+        CHANNEL.messageBuilder(ThrowAxePacket.class, id++, NetworkDirection.PLAY_TO_SERVER)
                 .encoder(ThrowAxePacket::encode)
                 .decoder(ThrowAxePacket::decode)
                 .consumerMainThread(ThrowAxePacket::handle)
