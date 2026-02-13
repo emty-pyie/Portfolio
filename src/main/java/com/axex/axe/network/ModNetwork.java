@@ -1,31 +1,28 @@
 package com.axex.axe.network;
 
+import com.axex.axe.AxeMod;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.network.ChannelBuilder;
 import net.minecraftforge.network.SimpleChannel;
 
 public class ModNetwork {
 
+    private static final String PROTOCOL_VERSION = "1";
+
     public static final SimpleChannel CHANNEL = ChannelBuilder
-            .named(new ResourceLocation("axe_or_ex", "main"))
-            .networkProtocolVersion(1)
-            .clientAcceptedVersions(version -> true)
-            .serverAcceptedVersions(version -> true)
+            .named(ResourceLocation.fromNamespaceAndPath(AxeMod.MODID, "main"))
+            .networkProtocolVersion(PROTOCOL_VERSION)
+            .clientAcceptedVersions(PROTOCOL_VERSION::equals)
+            .serverAcceptedVersions(PROTOCOL_VERSION::equals)
             .simpleChannel();
 
-    private static int packetId = 0;
-
     public static void register() {
+        int id = 0;
 
-        CHANNEL.messageBuilder(ThrowAxePacket.class, packetId++)
+        CHANNEL.messageBuilder(ThrowAxePacket.class, id++)
                 .encoder(ThrowAxePacket::encode)
                 .decoder(ThrowAxePacket::decode)
-                .consumerMainThread((packet, context) -> {
-                    var player = context.getSender();
-                    if (player != null) {
-                        ThrowAxePacket.handle(packet, player);
-                    }
-                })
+                .consumerMainThread(ThrowAxePacket::handle)
                 .add();
     }
 }
