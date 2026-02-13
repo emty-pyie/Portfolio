@@ -49,20 +49,14 @@ public class ThrownAxeEntity extends ThrowableProjectile {
 
     public ThrownAxeEntity(Level level, LivingEntity owner, ItemStack stack, float damage) {
         this(ModEntities.THROWN_AXE.get(), level);
-        this.setOwner(owner);
-        this.setAxeStack(stack.copy());
-        this.baseDamage = damage;
-        this.setPos(owner.getX(), owner.getEyeY() - 0.1D, owner.getZ());
         setOwner(owner);
         setAxeStack(stack.copy());
-        baseDamage = damage;
+        this.baseDamage = damage;
         setPos(owner.getX(), owner.getEyeY() - 0.1D, owner.getZ());
     }
 
+    // 1.21.1 SynchedEntityData uses Builder
     @Override
-    protected void defineSynchedData() {
-        this.entityData.define(AXE_STACK, ItemStack.EMPTY);
-        this.entityData.define(STUCK, false);
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         builder.define(AXE_STACK, ItemStack.EMPTY);
         builder.define(STUCK, false);
@@ -74,44 +68,36 @@ public class ThrownAxeEntity extends ThrowableProjectile {
 
         if (isStuck()) {
             setDeltaMovement(Vec3.ZERO);
+
             if (stuckPos != null) {
                 setPos(
-                        stuckPos.getX() + 0.5D,
-                        stuckPos.getY() + 0.5D,
-                        stuckPos.getZ() + 0.5D,
-                        stuckPos.getX() + STUCK_OFFSET;
-                        stuckPos.getY() + STUCK_OFFSET;
-                        stuckPos.getZ() + STUCK_OFFSET;
+                        stuckPos.getX() + STUCK_OFFSET,
+                        stuckPos.getY() + STUCK_OFFSET,
+                        stuckPos.getZ() + STUCK_OFFSET
                 );
             }
         }
 
-        if (!level().isClientSide && tickCount > 20 * 45) {
         if (!level().isClientSide && tickCount > MAX_LIFETIME_TICKS) {
             discard();
         }
     }
 
     @Override
-    protected boolean canHitEntity; (Entity entity;) {
-        if (isStuck()) {
-            return false;
-        }
+    protected boolean canHitEntity(Entity entity) {
+        if (isStuck()) return false;
 
         Entity owner = getOwner();
         return super.canHitEntity(entity) && entity != owner;
     }
 
     @Override
-    protected void onHitEntity;(EntityHitResult result;) {
-        super.onHitEntity(result);
-
+    protected void onHitEntity(EntityHitResult result) {
         Entity hit = result.getEntity();
         Entity owner = getOwner();
 
         DamageSource source =
                 damageSources().trident(this, owner == null ? this : owner);
-        DamageSource source = damageSources().trident(this, owner == null ? this : owner);
 
         hit.hurt(source, baseDamage);
 
@@ -121,16 +107,8 @@ public class ThrownAxeEntity extends ThrowableProjectile {
     }
 
     @Override
-    protected void onHitBlock;(BlockHitResult result;) {
-
+    protected void onHitBlock(BlockHitResult result) {
         BlockState state = level().getBlockState(result.getBlockPos());
-
-        if (state.is(BlockTags.LOGS)
-                || state.is(BlockTags.PLANKS)
-                || state.is(BlockTags.WOODEN_DOORS)
-                || state.is(BlockTags.WOODEN_FENCES)
-                || state.is(BlockTags.WOODEN_SLABS)
-                || state.is(BlockTags.WOODEN_STAIRS)) {
 
         if (isWoodLike(state)) {
             stickInBlock(result.getBlockPos(), result.getDirection());
@@ -143,17 +121,6 @@ public class ThrownAxeEntity extends ThrowableProjectile {
         }
     }
 
-    private void stickInBlock(BlockPos pos, Direction face) {
-
-        if (!level().isClientSide) {
-
-            setStuck(true);
-
-            stuckPos = pos.relative(face);
-
-            setNoGravity(true);
-
-            setDeltaMovement(Vec3.ZERO);
     private static boolean isWoodLike(BlockState state) {
         return state.is(BlockTags.LOGS)
                 || state.is(BlockTags.PLANKS)
@@ -163,14 +130,12 @@ public class ThrownAxeEntity extends ThrowableProjectile {
                 || state.is(BlockTags.WOODEN_STAIRS);
     }
 
-            hasImpulse = false;
     private void stickInBlock(BlockPos pos, Direction face) {
-        if (level().isClientSide) {
-            return;
-        }
+        if (level().isClientSide) return;
 
         setStuck(true);
         stuckPos = pos.relative(face);
+
         setNoGravity(true);
         setDeltaMovement(Vec3.ZERO);
         hasImpulse = false;
@@ -178,17 +143,11 @@ public class ThrownAxeEntity extends ThrowableProjectile {
 
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
-
-        super.addAdditionalSaveData(tag);
-
         tag.put("Axe", getAxeStack().save(registryAccess()));
-
         tag.putFloat("BaseDamage", baseDamage);
-
         tag.putBoolean("Stuck", isStuck());
 
         if (stuckPos != null) {
-
             tag.putInt("StuckX", stuckPos.getX());
             tag.putInt("StuckY", stuckPos.getY());
             tag.putInt("StuckZ", stuckPos.getZ());
@@ -197,32 +156,23 @@ public class ThrownAxeEntity extends ThrowableProjectile {
 
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
+        setAxeStack(ItemStack.parse(registryAccess(), tag.getCompound("Axe"))
+                .orElse(ItemStack.EMPTY));
 
-        super.readAdditionalSaveData(tag);
-
-        setAxeStack(
-                ItemStack.parse(registryAccess(), tag.getCompound("Axe"))
-                        .orElse(ItemStack.EMPTY)
-        );
-
-        setAxeStack(ItemStack.parse(registryAccess(), tag.getCompound("Axe")).orElse(ItemStack.EMPTY));
         baseDamage = tag.getFloat("BaseDamage");
-
         setStuck(tag.getBoolean("Stuck"));
 
         if (tag.contains("StuckX")) {
-
             stuckPos = new BlockPos(
                     tag.getInt("StuckX"),
                     tag.getInt("StuckY"),
                     tag.getInt("StuckZ")
             );
-            stuckPos = new BlockPos(tag.getInt("StuckX"), tag.getInt("StuckY"), tag.getInt("StuckZ"));
         }
     }
 
     @Override
-    protected double getGravity() {
+    protected double getDefaultGravity() {
         return isStuck() ? 0.0D : 0.05D;
     }
 
@@ -233,51 +183,33 @@ public class ThrownAxeEntity extends ThrowableProjectile {
 
     @Override
     public InteractionResult interact(Player player, InteractionHand hand) {
-
         if (!level().isClientSide
                 && isStuck()
                 && hand == InteractionHand.MAIN_HAND
                 && player.getMainHandItem().isEmpty()) {
 
             player.setItemInHand(hand, getAxeStack().copy());
-
             discard();
-
             return InteractionResult.SUCCESS;
         }
 
         return super.interact(player, hand);
     }
 
-    public static float computeDamage(
-            LivingEntity thrower,
-            ItemStack axeStack,
-            float chargeScale
-    ) {
-
-        float base =
-                (float) thrower.getAttributeValue(
-                        net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE
-                );
-
-        int sharpness =
-                EnchantmentHelper.getItemEnchantmentLevel(
-                        Enchantments.SHARPNESS,
-                        axeStack
-                );
-
-        float enchantBonus =
-                sharpness > 0 ? 0.5F * sharpness + 0.5F : 0.0F;
+    // 1.21 enchantment system
     public static float computeDamage(LivingEntity thrower, ItemStack axeStack, float chargeScale) {
-        float base = (float) thrower.getAttributeValue(Attributes.ATTACK_DAMAGE);
-        Holder.Reference<Enchantment> sharpnessEnchantment = thrower.registryAccess()
-                .lookupOrThrow(Registries.ENCHANTMENT)
-                .getOrThrow(Enchantments.SHARPNESS);
-        int sharpness = EnchantmentHelper.getItemEnchantmentLevel(sharpnessEnchantment, axeStack);
-        float enchantBonus = sharpness > 0 ? 0.5F * sharpness + 0.5F : 0.0F;
 
-        return (base + enchantBonus)
-                * (0.7F + 0.8F * chargeScale);
+        float base = (float) thrower.getAttributeValue(Attributes.ATTACK_DAMAGE);
+
+        Holder.Reference<Enchantment> sharpness =
+                thrower.registryAccess()
+                        .lookupOrThrow(Registries.ENCHANTMENT)
+                        .getOrThrow(Enchantments.SHARPNESS);
+
+        int level = EnchantmentHelper.getItemEnchantmentLevel(sharpness, axeStack);
+
+        float enchantBonus = level > 0 ? 0.5F * level + 0.5F : 0.0F;
+
         return (base + enchantBonus) * (0.7F + 0.8F * chargeScale);
     }
 
