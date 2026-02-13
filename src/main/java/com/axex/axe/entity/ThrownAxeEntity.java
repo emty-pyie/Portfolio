@@ -1,4 +1,5 @@
 package com.axex.axe.entity;
+import net.minecraftforge.network.NetworkHooks;
 
 import com.axex.axe.registry.ModEntities;
 import net.minecraft.core.BlockPos;
@@ -19,17 +20,21 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.ThrowableProjectile;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.network.NetworkHooks;
 
-public class ThrownAxeEntity extends ThrowableProjectile {
+public class ThrownAxeEntity extends Projectile {
 
     private static final EntityDataAccessor<ItemStack> AXE_STACK =
             SynchedEntityData.defineId(ThrownAxeEntity.class, EntityDataSerializers.ITEM_STACK);
@@ -41,9 +46,13 @@ public class ThrownAxeEntity extends ThrowableProjectile {
 
     private float baseDamage;
     private BlockPos stuckPos;
+    private final ItemStack axeStack;
+    private final float damage;
 
     public ThrownAxeEntity(EntityType<? extends ThrownAxeEntity> type, Level level) {
         super(type, level);
+        this.axeStack = ItemStack.EMPTY;
+        this.damage = 0;
     }
 
     public ThrownAxeEntity(Level level, LivingEntity owner, ItemStack stack, float damage) {
@@ -59,10 +68,23 @@ public class ThrownAxeEntity extends ThrowableProjectile {
         builder.define(AXE_STACK, ItemStack.EMPTY);
         builder.define(STUCK, false);
     }
+    public ThrownAxeEntity(Level level, LivingEntity thrower, ItemStack stack, float damage) {
+        super(ModEntities.THROWN_AXE.get(), level);
+        this.setOwner(thrower);
+        this.axeStack = stack.copy();
+        this.damage = damage;
+        this.setPos(thrower.getX(), thrower.getEyeY() - 0.1, thrower.getZ());
+    }
 
-    @Override
-    public void tick() {
-        super.tick();
+    public static float computeDamage(LivingEntity thrower, ItemStack axeStack, float chargeScale) {
+        float base = 6.0F;
+        float scaled = base * (0.6F + chargeScale);
+
+        int sharpness = 0;
+
+        if (thrower.level() instanceof Level level) {
+            var registry = level.registryAccess()
+                    .registryOrThrow(Registries.ENCHANTMENT);
 
         if (isStuck()) {
             setDeltaMovement(Vec3.ZERO);
@@ -115,10 +137,34 @@ public class ThrownAxeEntity extends ThrowableProjectile {
             stickInBlock(result.getBlockPos(), result.getDirection());
             return;
         }
+            var sharpHolder = registry.getHolder(Enchantments.SHARPNESS);
 
-        if (!level().isClientSide) {
-            spawnAtLocation(getAxeStack());
-            discard();
+            if (sharpHolder.isPresent()) {
+                sharpness = EnchantmentHelper.getItemEnchantmentLevel(
+                        sharpHolder.get(),
+                        axeStack
+                );
+            }
+        }
+
+        return scaled + (sharpness * 1.25F);
+    }
+
+    @Override
+    protected void defineSynchedData() {
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+
+        this.setDeltaMovement(this.getDeltaMovement().scale(0.99));
+
+        if (!this.level().isClientSide) {
+            HitResult result = ProjectileUtil.getHitResultOnMoveVector(this, this::canHitEntity);
+            if (result.getType() != HitResult.Type.MISS) {
+                this.onHit(result);
+            }
         }
     }
 
@@ -146,6 +192,27 @@ public class ThrownAxeEntity extends ThrowableProjectile {
             tag.putInt("StuckX", stuckPos.getX());
             tag.putInt("StuckY", stuckPos.getY());
             tag.putInt("StuckZ", stuckPos.getZ());
+
+        this.setPos(
+                this.getX() + this.getDeltaMovement().x,
+                this.getY() + this.getDeltaMovement().y,
+                this.getZ() + this.getDeltaMovement().z
+        );
+    }
+
+    @Override
+    protected void onHitEntity(EntityHitResult result) {
+        super.onHitEntity(result);
+
+        if (!this.level().isClientSide) {
+            Entity target = result.getEntity();
+            Entity owner = this.getOwner();
+
+            DamageSource source = this.damageSources().thrown(this, owner);
+
+            target.hurt(source, damage);
+
+            this.discard();
         }
     }
 
@@ -159,6 +226,11 @@ public class ThrownAxeEntity extends ThrowableProjectile {
 
         if (tag.contains("StuckX")) {
             stuckPos = new BlockPos(tag.getInt("StuckX"), tag.getInt("StuckY"), tag.getInt("StuckZ"));
+    protected void onHitBlock(BlockHitResult result) {
+        super.onHitBlock(result);
+
+        if (!this.level().isClientSide) {
+            this.discard();
         }
     }
 
@@ -193,13 +265,16 @@ public class ThrownAxeEntity extends ThrowableProjectile {
 
     public void setAxeStack(ItemStack stack) {
         entityData.set(AXE_STACK, stack);
+    protected boolean canHitEntity(Entity entity) {
+        return entity != this.getOwner();
     }
 
-    public boolean isStuck() {
-        return entityData.get(STUCK);
+    @Override
+    public Packet<ClientGamePacketListener> getAddEntityPacket() {
+        return NetworkHooks.getEntitySpawningPacket(this);
     }
 
-    public void setStuck(boolean stuck) {
-        entityData.set(STUCK, stuck);
+    public ItemStack getAxeStack() {
+        return axeStack;
     }
 }

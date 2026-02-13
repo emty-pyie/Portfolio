@@ -30,10 +30,9 @@ public class ThrownAxeRenderer extends EntityRenderer<ThrownAxeEntity> {
         poseStack.mulPose(Axis.YP.rotationDegrees(entity.getYRot()));
         poseStack.mulPose(Axis.XP.rotationDegrees(entity.getXRot()));
 
-        if (!entity.isStuck()) {
-            float spin = (entity.tickCount + partialTick) * 35.0F;
-            poseStack.mulPose(Axis.ZP.rotationDegrees(spin));
-        }
+        float spin = (entity.tickCount + partialTick) * 35.0F;
+poseStack.mulPose(Axis.ZP.rotationDegrees(spin));
+
 
         LivingEntity owner = entity.getOwner() instanceof LivingEntity living ? living : null;
         itemRenderer.renderStatic(
