@@ -11,11 +11,11 @@ public class ModNetwork {
     private static final String PROTOCOL_VERSION = "1";
 
     public static final SimpleChannel CHANNEL = ChannelBuilder
-            .named(new ResourceLocation(AxeMod.MODID, "main"))
-            .networkProtocolVersion(() -> PROTOCOL_VERSION)
-            .clientAcceptedVersions(PROTOCOL_VERSION::equals)
-            .serverAcceptedVersions(PROTOCOL_VERSION::equals)
-            .simpleChannel();
+        .named(new ResourceLocation(AxeMod.MODID, "main"))
+        .networkProtocolVersion(PROTOCOL_VERSION)
+        .clientAcceptedVersions(PROTOCOL_VERSION::equals)
+        .serverAcceptedVersions(PROTOCOL_VERSION::equals)
+        .simpleChannel();
 
     private static int packetId = 0;
 
