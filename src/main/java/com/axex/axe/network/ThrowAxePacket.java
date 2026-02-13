@@ -8,7 +8,8 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraftforge.network.PacketDistributor;
+import net.minecraftforge.network.SimpleChannel;
 
 import java.util.function.Supplier;
 
@@ -22,51 +23,46 @@ public record ThrowAxePacket(int chargeTicks) {
         return new ThrowAxePacket(buffer.readVarInt());
     }
 
-    public static void handle(ThrowAxePacket packet, Supplier<NetworkEvent.Context> contextSupplier) {
-        NetworkEvent.Context context = contextSupplier.get();
-        context.enqueueWork(() -> {
-            ServerPlayer player = context.getSender();
-            if (player == null || player.isSpectator()) {
-                return;
-            }
+    public static void handle(ThrowAxePacket packet, ServerPlayer player) {
 
-            ItemStack held = player.getMainHandItem();
-            if (!(held.getItem() instanceof AxeItem) || held.isEmpty()) {
-                return;
-            }
+        if (player == null || player.isSpectator()) {
+            return;
+        }
 
-            int clampedCharge = Mth.clamp(packet.chargeTicks(), 0, 20);
-            float chargeScale = clampedCharge / 20.0F;
+        ItemStack held = player.getMainHandItem();
+        if (!(held.getItem() instanceof AxeItem) || held.isEmpty()) {
+            return;
+        }
 
-            if (chargeScale < 0.1F) {
-                return;
-            }
+        int clampedCharge = Mth.clamp(packet.chargeTicks(), 0, 20);
+        float chargeScale = clampedCharge / 20.0F;
 
-            ThrownAxeEntity thrownAxe = new ThrownAxeEntity(
-                    player.level(),
-                    player,
-                    held,
-                    ThrownAxeEntity.computeDamage(player, held, chargeScale)
-            );
+        if (chargeScale < 0.1F) {
+            return;
+        }
 
-            float velocity = 1.6F + (chargeScale * 1.4F);
-            thrownAxe.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, velocity, 1.0F);
+        ThrownAxeEntity thrownAxe = new ThrownAxeEntity(
+                player.level(),
+                player,
+                held,
+                ThrownAxeEntity.computeDamage(player, held, chargeScale)
+        );
 
-            player.level().addFreshEntity(thrownAxe);
+        float velocity = 1.6F + (chargeScale * 1.4F);
+        thrownAxe.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, velocity, 1.0F);
 
-            player.level().playSound(
-                    null,
-                    player.blockPosition(),
-                    SoundEvents.TRIDENT_THROW.value(),
-                    SoundSource.PLAYERS,
-                    1.0F,
-                    0.95F + player.getRandom().nextFloat() * 0.1F
-            );
+        player.level().addFreshEntity(thrownAxe);
 
-            held.shrink(1);
-            player.getCooldowns().addCooldown(held.getItem(), 15);
-        });
+        player.level().playSound(
+                null,
+                player.blockPosition(),
+                SoundEvents.TRIDENT_THROW.value(),
+                SoundSource.PLAYERS,
+                1.0F,
+                0.95F + player.getRandom().nextFloat() * 0.1F
+        );
 
-        context.setPacketHandled(true);
+        held.shrink(1);
+        player.getCooldowns().addCooldown(held.getItem(), 15);
     }
 }
