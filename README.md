@@ -23,22 +23,6 @@ Minecraft Forge mod for **Minecraft Java 1.21.1** that adds a charged **Throwabl
 
 Built JAR should appear under `build/libs`.
 
-## Save/upload this project to GitHub
-1. Create a new empty repository on GitHub (no README/license/gitignore).
-2. In this project folder, set your remote URL:
-   ```bash
-   git remote add origin https://github.com/<your-username>/AxeEX-v1.git
-   ```
-   If `origin` already exists:
-   ```bash
-   git remote set-url origin https://github.com/<your-username>/AxeEX-v1.git
-   ```
-3. Push to GitHub:
-   ```bash
-   git branch -M main
-   git push -u origin main
-   ```
-4. Refresh your GitHub repo page and confirm all files are uploaded.
 
 
 ## Release
