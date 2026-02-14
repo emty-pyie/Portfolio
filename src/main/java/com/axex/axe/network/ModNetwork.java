@@ -5,16 +5,18 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.network.ChannelBuilder;
 import net.minecraftforge.network.SimpleChannel;
 
-public class ModNetwork {
+public final class ModNetwork {
 
     private static final int PROTOCOL_VERSION = 1;
 
     public static final SimpleChannel CHANNEL = ChannelBuilder
-        .named(new ResourceLocation(AxeMod.MODID + ":main"))
-        .networkProtocolVersion(PROTOCOL_VERSION)
-        .clientAcceptedVersions((status, version) -> true)
-        .serverAcceptedVersions((status, version) -> true)
-        .simpleChannel();
+            .named(new ResourceLocation(AxeMod.MODID, "main"))
+            .networkProtocolVersion(PROTOCOL_VERSION)
+            .clientAcceptedVersions((status, version) -> true)
+            .serverAcceptedVersions((status, version) -> true)
+            .simpleChannel();
+
+    private ModNetwork() {}
 
     public static void register() {
         int id = 0;
