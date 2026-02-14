@@ -10,11 +10,11 @@ public class ModNetwork {
     private static final int PROTOCOL_VERSION = 1;
 
     public static final SimpleChannel CHANNEL = ChannelBuilder
-            .named(ResourceLocation.fromNamespaceAndPath(AxeMod.MODID, "main"))
-            .networkProtocolVersion(PROTOCOL_VERSION)
-            .clientAcceptedVersions((status, version) -> true)
-            .serverAcceptedVersions((status, version) -> true)
-            .simpleChannel();
+        .named(new ResourceLocation(AxeMod.MODID + ":main"))
+        .networkProtocolVersion(PROTOCOL_VERSION)
+        .clientAcceptedVersions((status, version) -> true)
+        .serverAcceptedVersions((status, version) -> true)
+        .simpleChannel();
 
     public static void register() {
         int id = 0;
