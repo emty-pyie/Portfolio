@@ -56,7 +56,6 @@ public class ThrownAxeEntity extends ThrowableProjectile {
         setPos(owner.getX(), owner.getEyeY() - 0.1D, owner.getZ());
     }
 
-    // 1.21.1 SynchedEntityData uses Builder
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         builder.define(AXE_STACK, ItemStack.EMPTY);
@@ -172,16 +171,9 @@ public class ThrownAxeEntity extends ThrowableProjectile {
         }
     }
 
- @Override
-protected double getDefaultGravity() {
-    return isStuck() ? 0.0D : 0.05D;
-}
-
-
-    
-
+    // ✔ Correct for 1.21.1
     @Override
-    protected Item getDefaultItem(); {
+    protected Item getDefaultItem() {
         return getAxeStack().getItem();
     }
 
@@ -200,7 +192,6 @@ protected double getDefaultGravity() {
         return super.interact(player, hand);
     }
 
-    // 1.21 enchantment system
     public static float computeDamage(LivingEntity thrower, ItemStack axeStack, float chargeScale) {
 
         float base = (float) thrower.getAttributeValue(Attributes.ATTACK_DAMAGE);
