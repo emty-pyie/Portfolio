@@ -1,18 +1,29 @@
 plugins {
-    id 'eclipse'
+    id 'java'
     id 'idea'
     id 'maven-publish'
     id 'net.minecraftforge.gradle' version '[6.0,6.2)'
 }
 
-version = mod_version
-group = mod_group_id
+version = project.findProperty('mod_version') ?: '1.0.0'
+group = project.findProperty('mod_group_id') ?: 'com.axex'
 
 base {
-    archivesName = mod_id
+    archivesName = project.findProperty('mod_id') ?: 'axe_or_ex'
 }
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+
+repositories {
+    mavenCentral()
+    // Forge maven (for plugin resolved via pluginManagement and for Forge binary)
+    maven { url = uri('https://maven.minecraftforge.net') }
+}
+
+dependencies {
+    // This will resolve the Forge runtime (example: "1.21.1-52.0.53")
+    implementation "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+}
 
 minecraft {
     mappings channel: mapping_channel, version: mapping_version
@@ -21,10 +32,9 @@ minecraft {
 
     runs {
         configureEach {
-            workingDirectory project.file('run')
+            workingDirectory = project.file('run')
             property 'forge.logging.markers', 'REGISTRIES'
             property 'forge.logging.console.level', 'debug'
-
             mods {
                 "${mod_id}" {
                     source sourceSets.main
@@ -32,14 +42,6 @@ minecraft {
             }
         }
     }
-}
-
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
 }
 
 tasks.withType(JavaCompile).configureEach {
