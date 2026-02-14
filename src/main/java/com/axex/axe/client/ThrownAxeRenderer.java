@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemDisplayContext;
 
@@ -25,16 +26,20 @@ public class ThrownAxeRenderer extends EntityRenderer<ThrownAxeEntity> {
     @Override
     public void render(ThrownAxeEntity entity, float entityYaw, float partialTick,
                        PoseStack poseStack, MultiBufferSource bufferSource, int packedLight) {
+
         poseStack.pushPose();
 
-        poseStack.mulPose(Axis.YP.rotationDegrees(entity.getYRot()));
-        poseStack.mulPose(Axis.XP.rotationDegrees(entity.getXRot()));
+        float yaw = Mth.lerp(partialTick, entity.yRotO, entity.getYRot());
+        float pitch = Mth.lerp(partialTick, entity.xRotO, entity.getXRot());
+
+        poseStack.mulPose(Axis.YP.rotationDegrees(yaw - 90.0F));
+        poseStack.mulPose(Axis.ZP.rotationDegrees(pitch));
 
         float spin = (entity.tickCount + partialTick) * 35.0F;
-poseStack.mulPose(Axis.ZP.rotationDegrees(spin));
-
+        poseStack.mulPose(Axis.XP.rotationDegrees(spin));
 
         LivingEntity owner = entity.getOwner() instanceof LivingEntity living ? living : null;
+
         itemRenderer.renderStatic(
                 owner,
                 entity.getAxeStack(),
@@ -42,13 +47,13 @@ poseStack.mulPose(Axis.ZP.rotationDegrees(spin));
                 false,
                 poseStack,
                 bufferSource,
-                entity.level(),
                 packedLight,
                 OverlayTexture.NO_OVERLAY,
                 entity.getId()
         );
 
         poseStack.popPose();
+
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
     }
 
