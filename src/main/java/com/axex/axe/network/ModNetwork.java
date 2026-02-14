@@ -9,16 +9,18 @@ public final class ModNetwork {
 
     private static final int PROTOCOL_VERSION = 1;
 
-    public static final SimpleChannel CHANNEL = ChannelBuilder
-            .named(ResourceLocation.fromNamespaceAndPath(AxeMod.MODID, "main"))
-            .networkProtocolVersion(PROTOCOL_VERSION)
-            .clientAcceptedVersions((status, version) -> true)
-            .serverAcceptedVersions((status, version) -> true)
-            .simpleChannel();
+    public static SimpleChannel CHANNEL;
 
     private ModNetwork() {}
 
     public static void register() {
+        CHANNEL = ChannelBuilder
+                .named(ResourceLocation.fromNamespaceAndPath(AxeMod.MODID, "main"))
+                .networkProtocolVersion(PROTOCOL_VERSION)
+                .clientAcceptedVersions((status, version) -> true)
+                .serverAcceptedVersions((status, version) -> true)
+                .simpleChannel();
+
         int id = 0;
 
         CHANNEL.messageBuilder(ThrowAxePacket.class, id++)
