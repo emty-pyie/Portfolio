@@ -8,17 +8,15 @@ import net.minecraftforge.network.SimpleChannel;
 public class ModNetwork {
 
     private static final int PROTOCOL_VERSION = 1;
-    public static SimpleChannel CHANNEL;
+
+    public static final SimpleChannel CHANNEL = ChannelBuilder
+            .named(ResourceLocation.tryBuild(AxeMod.MODID, "main"))
+            .networkProtocolVersion(PROTOCOL_VERSION)
+            .clientAcceptedVersions((status, version) -> true)
+            .serverAcceptedVersions((status, version) -> true)
+            .simpleChannel();
 
     public static void register() {
-
-        CHANNEL = ChannelBuilder
-                .named(ResourceLocation.parse(AxeMod.MODID + ":main"))
-                .networkProtocolVersion(PROTOCOL_VERSION)
-                .clientAcceptedVersions((status, version) -> true)
-                .serverAcceptedVersions((status, version) -> true)
-                .simpleChannel();
-
         int id = 0;
 
         CHANNEL.messageBuilder(ThrowAxePacket.class, id++)
